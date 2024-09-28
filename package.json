@@ -1,9 +1,9 @@
 {
-  "name": "filecopier",
-  "displayName": "File Copier",
+  "name": "files2Prompt",
+  "displayName": "Files2Prompt",
   "description": "Copy file contents in XML format for LLM prompts.",
-  "version": "0.0.1",
-  "publisher": "your-publisher-name",
+  "version": "0.0.2",
+  "publisher": "thomas-mckanna",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -16,68 +16,73 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "fileCopier",
-          "title": "File Copier",
-          "icon": "resources/filecopier-icon.svg"
+          "id": "files2Prompt",
+          "title": "Files2Prompt",
+          "icon": "resources/files2prompt-icon.svg"
         }
       ]
     },
     "views": {
-      "fileCopier": [
+      "files2Prompt": [
         {
-          "id": "fileCopierView",
+          "id": "files2PromptView",
           "name": "Files"
         }
       ]
     },
     "commands": [
       {
-        "command": "fileCopier.refresh",
-        "title": "Refresh File Copier View",
+        "command": "files2Prompt.refresh",
+        "title": "Refresh Files2Prompt View",
         "icon": {
           "light": "resources/light/refresh.svg",
           "dark": "resources/dark/refresh.svg"
         }
       },
       {
-        "command": "fileCopier.copyFiles",
+        "command": "files2Prompt.copyFiles",
         "title": "Copy Files",
         "icon": {
           "light": "resources/light/copy.svg",
           "dark": "resources/dark/copy.svg"
         }
-      },
-      {
-        "command": "fileCopier.toggleCheck",
-        "title": "Toggle Check"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "fileCopier.copyFiles",
-          "when": "view == fileCopierView",
+          "command": "files2Prompt.copyFiles",
+          "when": "view == files2PromptView",
           "group": "navigation@1"
         },
         {
-          "command": "fileCopier.refresh",
-          "when": "view == fileCopierView",
+          "command": "files2Prompt.refresh",
+          "when": "view == files2PromptView",
           "group": "navigation@2"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "fileCopier.toggleCheck",
-          "when": "view == fileCopierView",
-          "group": "inline"
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "files2Prompt.refresh",
+        "key": "ctrl+r",
+        "mac": "cmd+r",
+        "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
+        "title": "Files2Prompt: Refresh"
+      },
+      {
+        "command": "files2Prompt.copyFiles",
+        "key": "ctrl+c",
+        "mac": "cmd+c",
+        "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
+        "title": "Files2Prompt: Copy Files"
+      }
+    ],
     "configuration": {
       "type": "object",
-      "title": "File Copier Settings",
+      "title": "Files2Prompt Settings",
       "properties": {
-        "fileCopier.systemMessage": {
+        "files2Prompt.systemMessage": {
           "type": "string",
           "description": "Optional system message to include in the output.",
           "default": ""

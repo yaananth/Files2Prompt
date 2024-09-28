@@ -12,13 +12,16 @@ export function activate(context: vscode.ExtensionContext) {
     const workspaceRoot = workspaceFolders[0].uri.fsPath;
     const fileTreeProvider = new FileTreeProvider(workspaceRoot);
 
-    vscode.window.registerTreeDataProvider("fileCopierView", fileTreeProvider);
+    const treeView = vscode.window.createTreeView("files2PromptView", {
+      treeDataProvider: fileTreeProvider,
+      manageCheckboxStateManually: true,
+    });
 
     context.subscriptions.push(
-      vscode.commands.registerCommand("fileCopier.refresh", () =>
+      vscode.commands.registerCommand("files2Prompt.refresh", () =>
         fileTreeProvider.refresh()
       ),
-      vscode.commands.registerCommand("fileCopier.copyFiles", async () => {
+      vscode.commands.registerCommand("files2Prompt.copyFiles", async () => {
         const checkedFiles = fileTreeProvider.getCheckedFiles();
 
         if (checkedFiles.length === 0) {
@@ -29,14 +32,14 @@ export function activate(context: vscode.ExtensionContext) {
         const xmlOutput = await generateXmlOutput(checkedFiles);
 
         // Include system message if provided
-        const config = vscode.workspace.getConfiguration("fileCopier");
+        const config = vscode.workspace.getConfiguration("files2Prompt");
         const systemMessage = config.get<string>("systemMessage");
 
         let finalOutput = xmlOutput;
 
         if (systemMessage && systemMessage.trim() !== "") {
           finalOutput =
-            `<systemMessage>\n${systemMessage}\n</systemMessage>\n` +
+            `<systemMessage>\n<![CDATA[\n${systemMessage}\n]]>\n</systemMessage>\n` +
             finalOutput;
         }
 
@@ -47,18 +50,24 @@ export function activate(context: vscode.ExtensionContext) {
           "File contents copied to clipboard."
         );
       })
+      // Add keybindings if necessary (optional)
     );
 
-    // Register a selection change listener
-    vscode.window.onDidChangeTreeViewSelection((e) => {
-      if (e.treeId === "fileCopierView") {
-        e.selection.forEach((item) => {
-          if (item instanceof FileItem) {
-            fileTreeProvider.toggleCheck(item);
-          }
-        });
+    // Handle checkbox state changes asynchronously
+    treeView.onDidChangeCheckboxState(async (e) => {
+      for (const [item, state] of e.items) {
+        await fileTreeProvider.updateCheckState(item, state);
       }
     });
+
+    // Listen for configuration changes to update behavior dynamically
+    context.subscriptions.push(
+      vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration("files2Prompt.systemMessage")) {
+          // Handle any dynamic updates if necessary
+        }
+      })
+    );
   } else {
     vscode.window.showInformationMessage(
       "Please open a workspace folder to use this extension."

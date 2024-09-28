@@ -1,8 +1,6 @@
-// src/fileTreeProvider.ts
-
 import * as vscode from "vscode";
-import * as path from "path";
 import * as fs from "fs";
+import * as path from "path";
 import ignore from "ignore";
 
 export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
@@ -14,7 +12,7 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
   > = this._onDidChangeTreeData.event;
 
   private workspaceRoot: string;
-  private checkedItems: Set<string> = new Set();
+  private checkedItems: Map<string, vscode.TreeItemCheckboxState> = new Map();
   private gitignore = ignore();
 
   constructor(workspaceRoot: string) {
@@ -27,10 +25,6 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
   }
 
   getTreeItem(element: FileItem): vscode.TreeItem {
-    // Update checkbox state
-    element.checkboxState = this.checkedItems.has(element.resourceUri.fsPath)
-      ? vscode.TreeItemCheckboxState.Checked
-      : vscode.TreeItemCheckboxState.Unchecked;
     return element;
   }
 
@@ -53,14 +47,16 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
     for (const entry of dirEntries) {
       const fullPath = path.join(dirPath, entry.name);
       const relativePath = path.relative(this.workspaceRoot, fullPath);
-
-      // Check if the file is gitignored
-      const isIgnored = this.gitignore.ignores(relativePath);
-
       const uri = vscode.Uri.file(fullPath);
       const isDirectory = entry.isDirectory();
 
-      const isChecked = this.checkedItems.has(fullPath);
+      const isIgnored = this.isGitIgnored(relativePath);
+      let checkboxState = this.checkedItems.get(fullPath);
+
+      if (checkboxState === undefined) {
+        checkboxState = vscode.TreeItemCheckboxState.Unchecked;
+      }
+
       const item = new FileItem(
         entry.name,
         uri,
@@ -68,7 +64,8 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
           ? vscode.TreeItemCollapsibleState.Collapsed
           : vscode.TreeItemCollapsibleState.None,
         isDirectory,
-        isChecked
+        checkboxState,
+        isIgnored
       );
 
       items.push(item);
@@ -77,57 +74,55 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
     return items;
   }
 
-  toggleCheck(item: FileItem): void {
+  async updateCheckState(
+    item: FileItem,
+    state: vscode.TreeItemCheckboxState
+  ): Promise<void> {
     const key = item.resourceUri.fsPath;
-    const relativePath = path.relative(this.workspaceRoot, key);
-    const isIgnored = this.gitignore.ignores(relativePath);
+    this.checkedItems.set(key, state);
 
-    if (this.checkedItems.has(key)) {
-      this.checkedItems.delete(key);
-    } else {
-      if (!isIgnored) {
-        this.checkedItems.add(key);
-      } else {
-        vscode.window.showInformationMessage(
-          `File "${item.label}" is gitignored and not checked by default. You can manually check it if needed.`
-        );
-        this.checkedItems.add(key);
-      }
-    }
-
-    // If it's a directory, toggle all children recursively
     if (item.isDirectory) {
-      this.toggleDirectory(key, this.checkedItems.has(key));
+      await this.updateDirectoryCheckState(key, state);
+    } else {
+      // If it's a file, update its parent directory's state
+      const parentDir = path.dirname(key);
+      await this.updateParentState(parentDir);
     }
 
     this.refresh();
   }
 
-  private async toggleDirectory(
-    dirPath: string,
-    check: boolean
-  ): Promise<void> {
-    const relativeDirPath = path.relative(this.workspaceRoot, dirPath);
-    const isDirIgnored = this.gitignore.ignores(relativeDirPath);
+  // Make updateParentState async
+  private async updateParentState(dirPath: string): Promise<void> {
+    const parentKey = path.dirname(dirPath);
+    const siblings = await fs.promises.readdir(dirPath);
 
-    if (isDirIgnored) {
-      if (!check) {
-        // If unchecking, remove from checkedItems
-        this.checkedItems.delete(dirPath);
-        // Continue to uncheck any previously checked children
-      } else {
-        // If checking, but directory is gitignored, do not add it or its children
-        return;
+    const allChecked = await Promise.all(
+      siblings.map(async (sibling) => {
+        const siblingPath = path.join(dirPath, sibling);
+        const isIgnored = this.isGitIgnored(
+          path.relative(this.workspaceRoot, siblingPath)
+        );
+        if (isIgnored) return true; // Ignore ignored files in parent state
+        const state = this.checkedItems.get(siblingPath);
+        return state === vscode.TreeItemCheckboxState.Checked;
+      })
+    ).then((results) => results.every((res) => res));
+
+    if (allChecked) {
+      this.checkedItems.set(dirPath, vscode.TreeItemCheckboxState.Checked);
+      if (parentKey !== dirPath) {
+        await this.updateParentState(parentKey);
       }
     } else {
-      if (check) {
-        // Add directory to checkedItems
-        this.checkedItems.add(dirPath);
-      } else {
-        this.checkedItems.delete(dirPath);
-      }
+      this.checkedItems.set(dirPath, vscode.TreeItemCheckboxState.Unchecked);
     }
+  }
 
+  private async updateDirectoryCheckState(
+    dirPath: string,
+    state: vscode.TreeItemCheckboxState
+  ): Promise<void> {
     const dirEntries = await fs.promises.readdir(dirPath, {
       withFileTypes: true,
     });
@@ -135,33 +130,31 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
     for (const entry of dirEntries) {
       const fullPath = path.join(dirPath, entry.name);
       const relativePath = path.relative(this.workspaceRoot, fullPath);
-      const isIgnored = this.gitignore.ignores(relativePath);
 
-      if (entry.isDirectory()) {
-        await this.toggleDirectory(fullPath, check);
-      } else {
-        if (isIgnored) {
-          if (!check) {
-            // Remove from checkedItems when unchecking
-            this.checkedItems.delete(fullPath);
-          }
-          // Do not add when checking
-        } else {
-          if (check) {
-            this.checkedItems.add(fullPath);
-          } else {
-            this.checkedItems.delete(fullPath);
-          }
+      if (!this.isGitIgnored(relativePath)) {
+        this.checkedItems.set(fullPath, state);
+
+        if (entry.isDirectory()) {
+          await this.updateDirectoryCheckState(fullPath, state);
         }
+      } else {
+        // For gitignored items, keep their current state or set to unchecked
+        const currentState = this.checkedItems.get(fullPath);
+        this.checkedItems.set(
+          fullPath,
+          currentState === vscode.TreeItemCheckboxState.Checked
+            ? vscode.TreeItemCheckboxState.Checked
+            : vscode.TreeItemCheckboxState.Unchecked
+        );
       }
     }
   }
 
   getCheckedFiles(): string[] {
-    return Array.from(this.checkedItems).filter((filePath) => {
-      const stat = fs.statSync(filePath);
-      return stat.isFile();
-    });
+    return Array.from(this.checkedItems.entries())
+      .filter(([_, state]) => state === vscode.TreeItemCheckboxState.Checked)
+      .map(([path, _]) => path)
+      .filter((path) => fs.statSync(path).isFile());
   }
 
   private loadGitignore() {
@@ -174,34 +167,25 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
       this.gitignore = ignore();
     }
   }
+
+  private isGitIgnored(relativePath: string): boolean {
+    return this.gitignore.ignores(relativePath);
+  }
 }
 
 export class FileItem extends vscode.TreeItem {
-  public checkboxState: vscode.TreeItemCheckboxState;
-
   constructor(
     public readonly label: string,
     public readonly resourceUri: vscode.Uri,
     public collapsibleState: vscode.TreeItemCollapsibleState,
     public isDirectory: boolean,
-    public checked: boolean
+    public checkboxState: vscode.TreeItemCheckboxState,
+    public isGitIgnored: boolean
   ) {
     super(label, collapsibleState);
 
     this.tooltip = this.resourceUri.fsPath;
-
-    this.command = {
-      command: "fileCopier.toggleCheck",
-      title: "",
-      arguments: [this],
-    };
-
-    // Set icon
     this.iconPath = new vscode.ThemeIcon(this.isDirectory ? "folder" : "file");
-
-    // Handle checkboxes
-    this.checkboxState = checked
-      ? vscode.TreeItemCheckboxState.Checked
-      : vscode.TreeItemCheckboxState.Unchecked;
+    this.checkboxState = checkboxState;
   }
 }

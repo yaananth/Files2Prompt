@@ -1,71 +1,99 @@
-# files2prompt README
+# Files2Prompt
 
-This is the README for your extension "files2prompt". After writing up a brief description, we recommend including the following sections.
+Copy file contents in XML format for LLM prompts effortlessly.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Visual File Tree**: Browse and select files within your workspace using an intuitive tree view.
+- **Selective Copying**: Easily choose which files to include in the copy operation with checkboxes.
+- **XML Formatting**: Copies the content of selected files wrapped in XML `<file>` elements, ready for use in LLM prompts or other applications.
+- **Custom System Message**: Optionally include a system message in your copied output, encapsulated within a `<systemMessage>` XML element.
+- **Configurable Shortcuts**: Quickly refresh the file tree or copy files using customizable keyboard shortcuts.
+- **Git Ignore Support**: Automatically ignores files and directories specified in your .gitignore.
 
-For example if there is an image subfolder under your extension project workspace:
+## Installation
 
-\!\[feature X\]\(images/feature-x.png\)
+### Install from Marketplace:
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+1. Open VS Code.
+2. Go to the Extensions view by clicking on the Extensions icon in the Activity Bar or pressing `Ctrl+Shift+X` (`Cmd+Shift+X` on macOS).
+3. Search for "Files2Prompt".
+4. Click Install.
 
-## Requirements
+### Install from VSIX:
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+1. Download the .vsix file from the releases page.
+2. In VS Code, press `Ctrl+Shift+P` (`Cmd+Shift+P` on macOS) to open the Command Palette.
+3. Type `Extensions: Install from VSIX...` and select the command.
+4. Browse to the downloaded .vsix file and install.
 
-## Extension Settings
+## Usage
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+### Open Files2Prompt View:
 
-For example:
+- Click on the Files2Prompt icon in the Activity Bar to open the Files2Prompt view.
 
-This extension contributes the following settings:
+### Select Files:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+- Browse through your workspace's file tree.
+- Check the boxes next to the files you want to copy.
 
-## Known Issues
+### Copy Files:
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Click the Copy Files button in the view's title bar or use the keyboard shortcut:
+  - Windows/Linux: `Ctrl+Alt+C`
+  - macOS: `Cmd+Alt+C`
 
-## Release Notes
+### Refresh File Tree:
 
-Users appreciate release notes as you update your extension.
+- To refresh the file tree view, click the Refresh button or use the keyboard shortcut:
+  - Windows/Linux: `Ctrl+Alt+R`
+  - macOS: `Cmd+Alt+R`
 
-### 1.0.0
+### Include System Message:
 
-Initial release of ...
+1. Go to Settings (`Ctrl+,` or `Cmd+,` on macOS).
+2. Navigate to Extensions > Files2Prompt.
+3. Enter your custom system message in the System Message field.
+4. When you copy files, this message will be included at the top of the XML output.
 
-### 1.0.1
+## Configuration
 
-Fixed issue #.
+### Customizing Keyboard Shortcuts
 
-### 1.1.0
+You can customize the keyboard shortcuts for refreshing and copying files:
 
-Added features X, Y, and Z.
+1. Open Keyboard Shortcuts:
+   - Press `Ctrl+K Ctrl+S` (`Cmd+K Cmd+S` on macOS).
+2. Search for "Files2Prompt: Refresh" and "Files2Prompt: Copy Files".
+3. Click on the desired command and press the new key combination you wish to assign.
 
----
+### Setting a Custom System Message
 
-## Following extension guidelines
+1. Open Settings:
+   - Press `Ctrl+,` (`Cmd+,` on macOS).
+2. Navigate to Extensions > Files2Prompt.
+3. Enter your desired system message in the System Message field.
+4. If left empty, no system message will be included in the copied output.
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+## Example Output
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+```xml
+<systemMessage>
+<![CDATA[
+This is a custom system message for LLM prompts.
+]]>
+</systemMessage>
+<files>
+  <file name="src/extension.ts">
+    <![CDATA[
+    // File content here
+    ]]>
+  </file>
+  <file name="README.md">
+    <![CDATA[
+    # Readme content here
+    ]]>
+  </file>
+</files>
+```
