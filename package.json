@@ -2,9 +2,16 @@
   "name": "files2prompt",
   "displayName": "Files2Prompt",
   "icon": "./files2prompt-icon.webp",
-  "description": "Copy file contents for LLM prompts.",
-  "version": "1.1.1",
+  "description": "Copy file contents for LLM prompts",
+  "version": "1.1.2",
   "publisher": "thomas-mckanna",
+  "keywords": [
+    "files",
+    "prompt",
+    "copy",
+    "llm",
+    "gpt"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/Thomas-McKanna/Files2Prompt"
