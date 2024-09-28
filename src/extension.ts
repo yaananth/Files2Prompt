@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
     const workspaceRoot = workspaceFolders[0].uri.fsPath;
     const fileTreeProvider = new FileTreeProvider(workspaceRoot);
 
-    const treeView = vscode.window.createTreeView("files2promptView", {
+    const treeView = vscode.window.createTreeView("files2PromptView", {
       treeDataProvider: fileTreeProvider,
       manageCheckboxStateManually: true,
     });
@@ -49,6 +49,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(
           "File contents copied to clipboard."
         );
+      }),
+      vscode.commands.registerCommand("files2prompt.clearChecks", () => {
+        fileTreeProvider.clearChecks();
+        vscode.window.showInformationMessage("All checks have been cleared.");
       })
       // Add keybindings if necessary (optional)
     );

@@ -1,9 +1,9 @@
 {
   "name": "files2prompt",
   "displayName": "Files2Prompt",
-  "icon": "./files2prompt-icon.png",
+  "icon": "./files2prompt-icon.webp",
   "description": "Copy file contents in XML format for LLM prompts.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publisher": "thomas-mckanna",
   "repository": {
     "type": "git",
@@ -15,7 +15,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView.files2prompView"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -30,7 +32,7 @@
     "views": {
       "files2prompt": [
         {
-          "id": "files2promptView",
+          "id": "files2PromptView",
           "name": "Files"
         }
       ]
@@ -51,19 +53,32 @@
           "light": "resources/light/copy.svg",
           "dark": "resources/dark/copy.svg"
         }
+      },
+      {
+        "command": "files2prompt.clearChecks",
+        "title": "Clear All Checks",
+        "icon": {
+          "light": "resources/light/clear.svg",
+          "dark": "resources/dark/clear.svg"
+        }
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "files2prompt.copyFiles",
-          "when": "view == files2promptView",
+          "when": "view == files2PromptView",
           "group": "navigation@1"
         },
         {
           "command": "files2prompt.refresh",
-          "when": "view == files2promptView",
+          "when": "view == files2PromptView",
           "group": "navigation@2"
+        },
+        {
+          "command": "files2prompt.clearChecks",
+          "when": "view == files2PromptView",
+          "group": "navigation@3"
         }
       ]
     },
@@ -72,15 +87,22 @@
         "command": "files2prompt.refresh",
         "key": "ctrl+r",
         "mac": "cmd+r",
-        "when": "files2promptView.active && files2promptView.visible && focusedView == 'files2promptView'",
+        "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
         "title": "Files2Prompt: Refresh"
       },
       {
         "command": "files2prompt.copyFiles",
         "key": "ctrl+c",
         "mac": "cmd+c",
-        "when": "files2promptView.active && files2promptView.visible && focusedView == 'files2promptView'",
+        "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
         "title": "Files2Prompt: Copy Files"
+      },
+      {
+        "command": "files2prompt.clearChecks",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
+        "title": "Files2Prompt: Clear All Checks"
       }
     ],
     "configuration": {

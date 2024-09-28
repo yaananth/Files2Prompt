@@ -24,6 +24,11 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
     this._onDidChangeTreeData.fire();
   }
 
+  clearChecks(): void {
+    this.checkedItems.clear();
+    this.refresh();
+  }
+
   getTreeItem(element: FileItem): vscode.TreeItem {
     return element;
   }
