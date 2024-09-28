@@ -12,16 +12,16 @@ export function activate(context: vscode.ExtensionContext) {
     const workspaceRoot = workspaceFolders[0].uri.fsPath;
     const fileTreeProvider = new FileTreeProvider(workspaceRoot);
 
-    const treeView = vscode.window.createTreeView("files2PromptView", {
+    const treeView = vscode.window.createTreeView("files2promptView", {
       treeDataProvider: fileTreeProvider,
       manageCheckboxStateManually: true,
     });
 
     context.subscriptions.push(
-      vscode.commands.registerCommand("files2Prompt.refresh", () =>
+      vscode.commands.registerCommand("files2prompt.refresh", () =>
         fileTreeProvider.refresh()
       ),
-      vscode.commands.registerCommand("files2Prompt.copyFiles", async () => {
+      vscode.commands.registerCommand("files2prompt.copyFiles", async () => {
         const checkedFiles = fileTreeProvider.getCheckedFiles();
 
         if (checkedFiles.length === 0) {
@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
         const xmlOutput = await generateXmlOutput(checkedFiles);
 
         // Include system message if provided
-        const config = vscode.workspace.getConfiguration("files2Prompt");
+        const config = vscode.workspace.getConfiguration("files2prompt");
         const systemMessage = config.get<string>("systemMessage");
 
         let finalOutput = xmlOutput;
@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Listen for configuration changes to update behavior dynamically
     context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration("files2Prompt.systemMessage")) {
+        if (event.affectsConfiguration("files2prompt.systemMessage")) {
           // Handle any dynamic updates if necessary
         }
       })

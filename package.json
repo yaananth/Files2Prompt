@@ -2,7 +2,7 @@
   "name": "files2prompt",
   "displayName": "Files2Prompt",
   "description": "Copy file contents in XML format for LLM prompts.",
-  "version": "2024.09.28",
+  "version": "1.0.0",
   "publisher": "thomas-mckanna",
   "repository": {
     "type": "git",
@@ -20,23 +20,23 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "files2Prompt",
+          "id": "files2prompt",
           "title": "Files2Prompt",
           "icon": "resources/files2prompt-icon.svg"
         }
       ]
     },
     "views": {
-      "files2Prompt": [
+      "files2prompt": [
         {
-          "id": "files2PromptView",
+          "id": "files2promptView",
           "name": "Files"
         }
       ]
     },
     "commands": [
       {
-        "command": "files2Prompt.refresh",
+        "command": "files2prompt.refresh",
         "title": "Refresh Files2Prompt View",
         "icon": {
           "light": "resources/light/refresh.svg",
@@ -44,7 +44,7 @@
         }
       },
       {
-        "command": "files2Prompt.copyFiles",
+        "command": "files2prompt.copyFiles",
         "title": "Copy Files",
         "icon": {
           "light": "resources/light/copy.svg",
@@ -55,30 +55,30 @@
     "menus": {
       "view/title": [
         {
-          "command": "files2Prompt.copyFiles",
-          "when": "view == files2PromptView",
+          "command": "files2prompt.copyFiles",
+          "when": "view == files2promptView",
           "group": "navigation@1"
         },
         {
-          "command": "files2Prompt.refresh",
-          "when": "view == files2PromptView",
+          "command": "files2prompt.refresh",
+          "when": "view == files2promptView",
           "group": "navigation@2"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "files2Prompt.refresh",
+        "command": "files2prompt.refresh",
         "key": "ctrl+r",
         "mac": "cmd+r",
-        "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
+        "when": "files2promptView.active && files2promptView.visible && focusedView == 'files2promptView'",
         "title": "Files2Prompt: Refresh"
       },
       {
-        "command": "files2Prompt.copyFiles",
+        "command": "files2prompt.copyFiles",
         "key": "ctrl+c",
         "mac": "cmd+c",
-        "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
+        "when": "files2promptView.active && files2promptView.visible && focusedView == 'files2promptView'",
         "title": "Files2Prompt: Copy Files"
       }
     ],
@@ -86,7 +86,7 @@
       "type": "object",
       "title": "Files2Prompt Settings",
       "properties": {
-        "files2Prompt.systemMessage": {
+        "files2prompt.systemMessage": {
           "type": "string",
           "description": "Optional system message to include in the output.",
           "default": ""
