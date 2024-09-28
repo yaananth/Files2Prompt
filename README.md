@@ -2,6 +2,8 @@
 
 Copy file contents in XML format for LLM prompts effortlessly.
 
+![Demo](demo.gif)
+
 ## Features
 
 - **Visual File Tree**: Browse and select files within your workspace using an intuitive tree view.
@@ -41,14 +43,20 @@ Copy file contents in XML format for LLM prompts effortlessly.
 ### Copy Files:
 
 - Click the Copy Files button in the view's title bar or use the keyboard shortcut:
-  - Windows/Linux: `Ctrl+Alt+C`
-  - macOS: `Cmd+Alt+C`
+  - Windows/Linux: `Ctrl+C`
+  - macOS: `Cmd+C`
 
 ### Refresh File Tree:
 
 - To refresh the file tree view, click the Refresh button or use the keyboard shortcut:
-  - Windows/Linux: `Ctrl+Alt+R`
-  - macOS: `Cmd+Alt+R`
+  - Windows/Linux: `Ctrl+R`
+  - macOS: `Cmd+R`
+
+### Clear Selection:
+
+- To clear all file selections, click the Clear Selection button or use the keyboard shortcut:
+  - Windows/Linux: `Ctrl+Shift+C`
+  - macOS: `Cmd+Shift+C`
 
 ### Include System Message:
 
