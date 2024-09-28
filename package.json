@@ -1,8 +1,9 @@
 {
   "name": "files2prompt",
   "displayName": "Files2Prompt",
+  "icon": "./files2prompt-icon.png",
   "description": "Copy file contents in XML format for LLM prompts.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "thomas-mckanna",
   "repository": {
     "type": "git",
