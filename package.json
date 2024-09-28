@@ -1,0 +1,98 @@
+{
+  "name": "filecopier",
+  "displayName": "File Copier",
+  "description": "Copy file contents in XML format for LLM prompts.",
+  "version": "0.0.1",
+  "publisher": "your-publisher-name",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fileCopier",
+          "title": "File Copier",
+          "icon": "resources/filecopier-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "fileCopier": [
+        {
+          "id": "fileCopierView",
+          "name": "Files"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "fileCopier.refresh",
+        "title": "Refresh File Copier View",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "fileCopier.copyFiles",
+        "title": "Copy Files",
+        "icon": {
+          "light": "resources/light/copy.svg",
+          "dark": "resources/dark/copy.svg"
+        }
+      },
+      {
+        "command": "fileCopier.toggleCheck",
+        "title": "Toggle Check"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "fileCopier.copyFiles",
+          "when": "view == fileCopierView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fileCopier.refresh",
+          "when": "view == fileCopierView",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fileCopier.toggleCheck",
+          "when": "view == fileCopierView",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "File Copier Settings",
+      "properties": {
+        "fileCopier.systemMessage": {
+          "type": "string",
+          "description": "Optional system message to include in the output.",
+          "default": ""
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^4.5.4"
+  }
+}
