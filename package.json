@@ -3,7 +3,7 @@
   "displayName": "Files2Prompt",
   "icon": "./files2prompt-icon.webp",
   "description": "Copy file contents for LLM prompts",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "publisher": "thomas-mckanna",
   "keywords": [
     "files",

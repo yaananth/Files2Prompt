@@ -49,6 +49,13 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
       withFileTypes: true,
     });
 
+    // Sort directories above files and alphabetically
+    dirEntries.sort((a, b) => {
+      if (a.isDirectory() && !b.isDirectory()) return -1;
+      if (!a.isDirectory() && b.isDirectory()) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
     for (const entry of dirEntries) {
       const fullPath = path.join(dirPath, entry.name);
       const relativePath = path.relative(this.workspaceRoot, fullPath);
