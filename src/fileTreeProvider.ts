@@ -30,6 +30,10 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
   }
 
   getTreeItem(element: FileItem): vscode.TreeItem {
+    const key = element.resourceUri.fsPath;
+    const checkboxState =
+      this.checkedItems.get(key) ?? vscode.TreeItemCheckboxState.Unchecked;
+    element.checkboxState = checkboxState;
     return element;
   }
 
@@ -95,37 +99,40 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
 
     if (item.isDirectory) {
       await this.updateDirectoryCheckState(key, state);
-    } else {
-      // If it's a file, update its parent directory's state
-      const parentDir = path.dirname(key);
-      await this.updateParentState(parentDir);
+    }
+
+    // Update parent directories' states
+    let dirPath = path.dirname(key);
+    while (dirPath.startsWith(this.workspaceRoot)) {
+      await this.updateParentState(dirPath);
+      dirPath = path.dirname(dirPath);
     }
 
     this.refresh();
   }
 
-  // Make updateParentState async
   private async updateParentState(dirPath: string): Promise<void> {
-    const parentKey = path.dirname(dirPath);
     const siblings = await fs.promises.readdir(dirPath);
 
-    const allChecked = await Promise.all(
-      siblings.map(async (sibling) => {
-        const siblingPath = path.join(dirPath, sibling);
-        const isIgnored = this.isGitIgnored(
-          path.relative(this.workspaceRoot, siblingPath)
-        );
-        if (isIgnored) return true; // Ignore ignored files in parent state
-        const state = this.checkedItems.get(siblingPath);
-        return state === vscode.TreeItemCheckboxState.Checked;
-      })
-    ).then((results) => results.every((res) => res));
+    let allChecked = true;
+
+    for (const sibling of siblings) {
+      const siblingPath = path.join(dirPath, sibling);
+      const isIgnored = this.isGitIgnored(
+        path.relative(this.workspaceRoot, siblingPath)
+      );
+      if (isIgnored) continue; // Ignore ignored files in parent state
+      const state =
+        this.checkedItems.get(siblingPath) ??
+        vscode.TreeItemCheckboxState.Unchecked;
+      if (state !== vscode.TreeItemCheckboxState.Checked) {
+        allChecked = false;
+        break;
+      }
+    }
 
     if (allChecked) {
       this.checkedItems.set(dirPath, vscode.TreeItemCheckboxState.Checked);
-      if (parentKey !== dirPath) {
-        await this.updateParentState(parentKey);
-      }
     } else {
       this.checkedItems.set(dirPath, vscode.TreeItemCheckboxState.Unchecked);
     }
@@ -166,7 +173,31 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
     return Array.from(this.checkedItems.entries())
       .filter(([_, state]) => state === vscode.TreeItemCheckboxState.Checked)
       .map(([path, _]) => path)
-      .filter((path) => fs.statSync(path).isFile());
+      .filter((path) => fs.existsSync(path) && fs.statSync(path).isFile());
+  }
+
+  public async setCheckedFiles(filePaths: string[]): Promise<void> {
+    // Clear existing checks
+    this.checkedItems.clear();
+
+    // For each file in filePaths, set its checkboxState to Checked
+    for (const filePath of filePaths) {
+      if (fs.existsSync(filePath)) {
+        this.checkedItems.set(filePath, vscode.TreeItemCheckboxState.Checked);
+      }
+    }
+
+    // Update parent directories' checkbox states
+    for (const filePath of filePaths) {
+      let dirPath = path.dirname(filePath);
+      while (dirPath.startsWith(this.workspaceRoot)) {
+        await this.updateParentState(dirPath);
+        dirPath = path.dirname(dirPath);
+      }
+    }
+
+    // Refresh the tree view
+    this.refresh();
   }
 
   private loadGitignore() {

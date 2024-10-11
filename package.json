@@ -3,7 +3,7 @@
   "displayName": "Files2Prompt",
   "icon": "./files2prompt-icon.webp",
   "description": "Copy file contents for LLM prompts",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "publisher": "thomas-mckanna",
   "keywords": [
     "files",
@@ -23,7 +23,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onView.files2prompView"
+    "onView.files2PromptView"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -68,6 +68,22 @@
           "light": "resources/light/clear.svg",
           "dark": "resources/dark/clear.svg"
         }
+      },
+      {
+        "command": "files2prompt.goBack",
+        "title": "Go Back",
+        "icon": {
+          "light": "resources/light/back.svg",
+          "dark": "resources/dark/back.svg"
+        }
+      },
+      {
+        "command": "files2prompt.goForward",
+        "title": "Go Forward",
+        "icon": {
+          "light": "resources/light/forward.svg",
+          "dark": "resources/dark/forward.svg"
+        }
       }
     ],
     "menus": {
@@ -86,6 +102,16 @@
           "command": "files2prompt.clearChecks",
           "when": "view == files2PromptView",
           "group": "navigation@3"
+        },
+        {
+          "command": "files2prompt.goBack",
+          "when": "view == files2PromptView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "files2prompt.goForward",
+          "when": "view == files2PromptView",
+          "group": "navigation@5"
         }
       ]
     },

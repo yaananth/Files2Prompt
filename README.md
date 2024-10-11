@@ -12,6 +12,7 @@ Copy file contents in XML format for LLM prompts effortlessly.
 - **Custom System Message**: Optionally include a system message in your copied output, encapsulated within a `<systemMessage>` XML element.
 - **Configurable Shortcuts**: Quickly refresh the file tree or copy files using customizable keyboard shortcuts.
 - **Git Ignore Support**: Automatically ignores files and directories specified in your .gitignore.
+- **Selection History**: Quickly switch between sets of previously selected files.
 
 ## Installation
 
