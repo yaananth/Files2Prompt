@@ -5,3 +5,5 @@ node_modules
 *.vsix
 foobar
 .DS_Store
+docs/
+prompt

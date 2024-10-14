@@ -13,6 +13,7 @@ Copy file contents in XML format for LLM prompts effortlessly.
 - **Configurable Shortcuts**: Quickly refresh the file tree or copy files using customizable keyboard shortcuts.
 - **Git Ignore Support**: Automatically ignores files and directories specified in your .gitignore.
 - **Selection History**: Quickly switch between sets of previously selected files.
+- **Paste XML Response**: If XML is pasted into the editor in the same format as the copied output, the files will automatically be updated or created in your workspace. This allows for rapid iteration. See [recommended workflow](#recommended-workflow) for more information.
 
 ## Installation
 
@@ -59,12 +60,28 @@ Copy file contents in XML format for LLM prompts effortlessly.
   - Windows/Linux: `Ctrl+Shift+C`
   - macOS: `Cmd+Shift+C`
 
+### Paste XML Response:
+
+- To update or create files in your workspace from LLM-outputted XML content, use the following keyboard shortcut while the extension UI is active:
+  - Windows/Linux: `Ctrl+V`
+  - macOS: `Cmd+V`
+
+It is recommended that if you use this feature you have a custom system message (see section below) to ensure that the XML content is correctly formatted. Here is an example of such a system message:
+
+```
+Always provide full code listings. You only need to include files that have changed. I repeat, ALWAYS provide full code listings. Your output should be in XML format (in a code block) that mirrors the input format (that is, `<files>` element with a list of `<file>` in the interior).
+```
+
 ### Include System Message:
 
 1. Go to Settings (`Ctrl+,` or `Cmd+,` on macOS).
 2. Navigate to Extensions > Files2Prompt.
 3. Enter your custom system message in the System Message field.
 4. When you copy files, this message will be included at the top of the XML output.
+
+See recommended system message above.
+
+
 
 ## Configuration
 
@@ -106,3 +123,21 @@ This is a custom system message for LLM prompts.
   </file>
 </files>
 ```
+
+## Recommended Workflow
+
+The Files2Prompt extension allows for a rapid iterative workflow when working with an LLM. It is first recommended that you set the system message setting to that described [above](#include-system-message). This will ensure that the XML content is correctly formatted when pasted back into the editor.
+
+Next, create a file called `prompt` in the root of your repository. You will want to add this to `.gitignore`. This file acts as a scratchpad for you latest prompt.
+
+Optionally, create a directory called `docs` (also in `.gitignore`) where you can paste documentation into files for any technologies or code that is related to your project.
+
+Then, a single iteration of the workflow might look like this:
+
+1. Alter the `prompt` file with you desired next state.
+2. Open the Files2Prompt view and select `prompt` and any other files that are relevant to your prompt. Also select any relevant documentation files from the `docs` directory.
+3. Copy your XML prompt with the keyboard shortcut or button.
+4. Paste the content into the LLM and submit.
+5. Copy the LLM contents, which should be in XML format if you followed the system message instructions.
+6. With the Files2Prompt view open, paste the LLM content with the keyboard shortcut. This will update the file contents or make brand new files.
+7. Loop back to step 1.

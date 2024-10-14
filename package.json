@@ -3,7 +3,7 @@
   "displayName": "Files2Prompt",
   "icon": "./files2prompt-icon.webp",
   "description": "Copy file contents for LLM prompts",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "publisher": "thomas-mckanna",
   "keywords": [
     "files",
@@ -84,6 +84,10 @@
           "light": "resources/light/forward.svg",
           "dark": "resources/dark/forward.svg"
         }
+      },
+      {
+        "command": "files2prompt.pasteXml",
+        "title": "Paste XML"
       }
     ],
     "menus": {
@@ -136,6 +140,13 @@
         "mac": "cmd+shift+c",
         "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
         "title": "Files2Prompt: Clear All Checks"
+      },
+      {
+        "command": "files2prompt.pasteXml",
+        "key": "ctrl+v",
+        "mac": "cmd+v",
+        "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
+        "title": "Files2Prompt: Paste XML"
       }
     ],
     "configuration": {
@@ -163,6 +174,7 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
+    "fast-xml-parser": "^4.5.0",
     "ignore": "^6.0.2"
   }
 }

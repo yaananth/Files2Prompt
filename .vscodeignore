@@ -10,4 +10,5 @@ vsc-extension-quickstart.md
 **/*.ts
 **/.vscode-test.*
 !node_modules/ignore/**
+!node_modules/fast-xml-parser/**
 demo.gif
