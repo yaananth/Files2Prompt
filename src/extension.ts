@@ -1,3 +1,4 @@
+
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
@@ -54,7 +55,12 @@ export function activate(context: vscode.ExtensionContext) {
           // Escape any ']]>' sequences in systemMessage
           const safeSystemMessage = systemMessage.replace(/]]>/g, ']]]]><![CDATA[>');
           finalOutput =
-            `<systemMessage>\n<![CDATA[\n${safeSystemMessage}\n]]>\n</systemMessage>\n` +
+            `<systemMessage>
+<![CDATA[
+${safeSystemMessage}
+>
+</systemMessage>
+` +
             finalOutput;
         }
 
@@ -100,6 +106,50 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.commands.registerCommand("files2prompt.pasteXml", async () => {
         const clipboardContent = await vscode.env.clipboard.readText();
         await processXmlContent(clipboardContent);
+      }),
+      vscode.commands.registerCommand("files2prompt.copyOpenFiles", async () => {
+        const tabGroups: ReadonlyArray<vscode.TabGroup> = vscode.window.tabGroups.all;
+
+        let xmlContent = "";
+
+        for (const group of tabGroups) {
+          for (const tab of group.tabs) {
+            if (tab.input instanceof vscode.TabInputText) {
+              const fileUri = tab.input.uri;
+              const filePath = fileUri.fsPath;
+              if (fs.existsSync(filePath)) {
+                const content = fs.readFileSync(filePath, 'utf-8');
+                // Escape any ']]>' sequences in content
+                const safeContent = content.replace(/]]>/g, ']]]]><![CDATA[>');
+
+                const fileName = path.relative(
+                  vscode.workspace.workspaceFolders![0].uri.fsPath,
+                  filePath
+                );
+
+                xmlContent += `<file name="${fileName}">
+<![CDATA[
+${safeContent}
+>
+</file>
+`;
+              }
+            }
+          }
+        }
+
+        if (xmlContent === "") {
+          vscode.window.showWarningMessage("No open files to copy.");
+          return;
+        }
+
+        const finalOutput = `<files>
+${xmlContent}</files>`;
+
+        // Copy to clipboard
+        await vscode.env.clipboard.writeText(finalOutput);
+
+        vscode.window.showInformationMessage("Open file contents copied to clipboard.");
       })
     );
 
@@ -141,10 +191,16 @@ async function generateXmlOutput(filePaths: string[]): Promise<string> {
       filePath
     );
 
-    xmlContent += `<file name="${fileName}">\n<![CDATA[\n${safeContent}\n]]>\n</file>\n`;
+    xmlContent += `<file name="${fileName}">
+<![CDATA[
+${safeContent}
+>
+</file>
+`;
   }
 
-  return `<files>\n${xmlContent}</files>`;
+  return `<files>
+${xmlContent}</files>`;
 }
 
 // Helper function to compare arrays of strings

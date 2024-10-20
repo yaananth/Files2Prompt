@@ -88,6 +88,10 @@
       {
         "command": "files2prompt.pasteXml",
         "title": "Paste XML"
+      },
+      {
+        "command": "files2prompt.copyOpenFiles",
+        "title": "Copy Open Files"
       }
     ],
     "menus": {
@@ -136,8 +140,8 @@
       },
       {
         "command": "files2prompt.clearChecks",
-        "key": "ctrl+shift+c",
-        "mac": "cmd+shift+c",
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+x",
         "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
         "title": "Files2Prompt: Clear All Checks"
       },
@@ -147,6 +151,12 @@
         "mac": "cmd+v",
         "when": "files2PromptView.active && files2PromptView.visible && focusedView == 'files2PromptView'",
         "title": "Files2Prompt: Paste XML"
+      },
+      {
+        "command": "files2prompt.copyOpenFiles",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "title": "Files2Prompt: Copy Open Files"
       }
     ],
     "configuration": {
