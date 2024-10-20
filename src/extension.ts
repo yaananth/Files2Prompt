@@ -153,6 +153,15 @@ ${xmlContent}</files>`;
       })
     );
 
+    // Watch for file changes and refresh the tree view
+    const watcher = vscode.workspace.createFileSystemWatcher('**/*');
+
+    watcher.onDidCreate(uri => fileTreeProvider.refresh());
+    watcher.onDidDelete(uri => fileTreeProvider.refresh());
+    watcher.onDidChange(uri => fileTreeProvider.refresh());
+
+    context.subscriptions.push(watcher);
+
     // Handle checkbox state changes asynchronously
     treeView.onDidChangeCheckboxState(async (e) => {
       for (const [item, state] of e.items) {
