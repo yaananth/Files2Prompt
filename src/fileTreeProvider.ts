@@ -1,3 +1,4 @@
+
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
@@ -118,10 +119,6 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
 
     for (const sibling of siblings) {
       const siblingPath = path.join(dirPath, sibling);
-      const isIgnored = this.isGitIgnored(
-        path.relative(this.workspaceRoot, siblingPath)
-      );
-      if (isIgnored) continue; // Ignore ignored files in parent state
       const state =
         this.checkedItems.get(siblingPath) ??
         vscode.TreeItemCheckboxState.Unchecked;
@@ -146,25 +143,23 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem> {
       withFileTypes: true,
     });
 
+    const relativeDirPath = path.relative(this.workspaceRoot, dirPath);
+    const isDirGitIgnored = this.isGitIgnored(relativeDirPath);
+
     for (const entry of dirEntries) {
       const fullPath = path.join(dirPath, entry.name);
       const relativePath = path.relative(this.workspaceRoot, fullPath);
 
-      if (!this.isGitIgnored(relativePath)) {
-        this.checkedItems.set(fullPath, state);
+      // If parent directory is gitignored, proceed to update its children
+      // If parent directory is not gitignored, skip updating gitignored directories
+      if (!isDirGitIgnored && entry.isDirectory() && this.isGitIgnored(relativePath)) {
+        continue; // Skip gitignored directories
+      }
 
-        if (entry.isDirectory()) {
-          await this.updateDirectoryCheckState(fullPath, state);
-        }
-      } else {
-        // For gitignored items, keep their current state or set to unchecked
-        const currentState = this.checkedItems.get(fullPath);
-        this.checkedItems.set(
-          fullPath,
-          currentState === vscode.TreeItemCheckboxState.Checked
-            ? vscode.TreeItemCheckboxState.Checked
-            : vscode.TreeItemCheckboxState.Unchecked
-        );
+      this.checkedItems.set(fullPath, state);
+
+      if (entry.isDirectory()) {
+        await this.updateDirectoryCheckState(fullPath, state);
       }
     }
   }
