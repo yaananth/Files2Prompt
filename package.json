@@ -3,7 +3,7 @@
   "displayName": "Files2Prompt",
   "icon": "./files2prompt-icon.webp",
   "description": "Copy file contents for LLM prompts",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "publisher": "thomas-mckanna",
   "keywords": [
     "files",
@@ -167,6 +167,11 @@
           "type": "string",
           "description": "Optional system message to include in the output.",
           "default": ""
+        },
+        "files2prompt.ignoredExtensions": {
+          "type": "string",
+          "description": "Comma-separated list of file extensions to ignore during recursive selection. Example: 'png,jpg,jpeg,gif,svg'",
+          "default": "png,jpg,jpeg,gif,svg"
         }
       }
     }

@@ -17,6 +17,9 @@ export function activate(context: vscode.ExtensionContext) {
       manageCheckboxStateManually: true,
     });
 
+    // Add fileTreeProvider to ensure proper disposal
+    context.subscriptions.push(fileTreeProvider);
+
     let history: string[][] = [];
     let historyPosition: number = -1;
 
@@ -152,15 +155,6 @@ ${xmlContent}</files>`;
         vscode.window.showInformationMessage("Open file contents copied to clipboard.");
       })
     );
-
-    // Watch for file changes and refresh the tree view
-    const watcher = vscode.workspace.createFileSystemWatcher('**/*');
-
-    watcher.onDidCreate(uri => fileTreeProvider.refresh());
-    watcher.onDidDelete(uri => fileTreeProvider.refresh());
-    watcher.onDidChange(uri => fileTreeProvider.refresh());
-
-    context.subscriptions.push(watcher);
 
     // Handle checkbox state changes asynchronously
     treeView.onDidChangeCheckboxState(async (e) => {
