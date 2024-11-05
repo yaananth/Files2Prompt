@@ -1,9 +1,8 @@
-
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { FileTreeProvider } from "./fileTreeProvider";
-import { XMLParser } from 'fast-xml-parser';
+import { XMLParser } from "fast-xml-parser";
 
 export function activate(context: vscode.ExtensionContext) {
   const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -14,7 +13,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     const treeView = vscode.window.createTreeView("files2PromptView", {
       treeDataProvider: fileTreeProvider,
-      manageCheckboxStateManually: true,
     });
 
     // Add fileTreeProvider to ensure proper disposal
@@ -56,15 +54,17 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (systemMessage && systemMessage.trim() !== "") {
           // Escape any ']]>' sequences in systemMessage
-          const safeSystemMessage = systemMessage.replace(/]]>/g, ']]]]><![CDATA[>');
+          const safeSystemMessage = systemMessage.replace(
+            /]]>/g,
+            "]]]]><![CDATA[>"
+          );
           finalOutput =
             `<systemMessage>
 <![CDATA[
 ${safeSystemMessage}
 >
 </systemMessage>
-` +
-            finalOutput;
+` + finalOutput;
         }
 
         // Copy to clipboard
@@ -110,50 +110,59 @@ ${safeSystemMessage}
         const clipboardContent = await vscode.env.clipboard.readText();
         await processXmlContent(clipboardContent);
       }),
-      vscode.commands.registerCommand("files2prompt.copyOpenFiles", async () => {
-        const tabGroups: ReadonlyArray<vscode.TabGroup> = vscode.window.tabGroups.all;
+      vscode.commands.registerCommand(
+        "files2prompt.copyOpenFiles",
+        async () => {
+          const tabGroups: ReadonlyArray<vscode.TabGroup> =
+            vscode.window.tabGroups.all;
 
-        let xmlContent = "";
+          let xmlContent = "";
 
-        for (const group of tabGroups) {
-          for (const tab of group.tabs) {
-            if (tab.input instanceof vscode.TabInputText) {
-              const fileUri = tab.input.uri;
-              const filePath = fileUri.fsPath;
-              if (fs.existsSync(filePath)) {
-                const content = fs.readFileSync(filePath, 'utf-8');
-                // Escape any ']]>' sequences in content
-                const safeContent = content.replace(/]]>/g, ']]]]><![CDATA[>');
+          for (const group of tabGroups) {
+            for (const tab of group.tabs) {
+              if (tab.input instanceof vscode.TabInputText) {
+                const fileUri = tab.input.uri;
+                const filePath = fileUri.fsPath;
+                if (fs.existsSync(filePath)) {
+                  const content = fs.readFileSync(filePath, "utf-8");
+                  // Escape any ']]>' sequences in content
+                  const safeContent = content.replace(
+                    /]]>/g,
+                    "]]]]><![CDATA[>"
+                  );
 
-                const fileName = path.relative(
-                  vscode.workspace.workspaceFolders![0].uri.fsPath,
-                  filePath
-                );
+                  const fileName = path.relative(
+                    vscode.workspace.workspaceFolders![0].uri.fsPath,
+                    filePath
+                  );
 
-                xmlContent += `<file name="${fileName}">
+                  xmlContent += `<file name="${fileName}">
 <![CDATA[
 ${safeContent}
 >
 </file>
 `;
+                }
               }
             }
           }
-        }
 
-        if (xmlContent === "") {
-          vscode.window.showWarningMessage("No open files to copy.");
-          return;
-        }
+          if (xmlContent === "") {
+            vscode.window.showWarningMessage("No open files to copy.");
+            return;
+          }
 
-        const finalOutput = `<files>
+          const finalOutput = `<files>
 ${xmlContent}</files>`;
 
-        // Copy to clipboard
-        await vscode.env.clipboard.writeText(finalOutput);
+          // Copy to clipboard
+          await vscode.env.clipboard.writeText(finalOutput);
 
-        vscode.window.showInformationMessage("Open file contents copied to clipboard.");
-      })
+          vscode.window.showInformationMessage(
+            "Open file contents copied to clipboard."
+          );
+        }
+      )
     );
 
     // Handle checkbox state changes asynchronously
@@ -178,7 +187,7 @@ ${xmlContent}</files>`;
   }
 }
 
-export function deactivate() { }
+export function deactivate() {}
 
 // Helper function to generate XML output
 async function generateXmlOutput(filePaths: string[]): Promise<string> {
@@ -187,7 +196,7 @@ async function generateXmlOutput(filePaths: string[]): Promise<string> {
   for (const filePath of filePaths) {
     const content = fs.readFileSync(filePath, "utf-8");
     // Escape any ']]>' sequences in file content
-    const safeContent = content.replace(/]]>/g, ']]]]><![CDATA[>');
+    const safeContent = content.replace(/]]>/g, "]]]]><![CDATA[>");
 
     const fileName = path.relative(
       vscode.workspace.workspaceFolders![0].uri.fsPath,
@@ -232,7 +241,7 @@ async function processXmlContent(xmlContent: string) {
     parseTagValue: true,
     parseAttributeValue: false,
     trimValues: false,
-    cdataPropName: '__cdata',
+    cdataPropName: "__cdata",
     tagValueProcessor: (val, tagName) => val, // Prevent default processing
   });
 
@@ -249,23 +258,28 @@ async function processXmlContent(xmlContent: string) {
     return;
   }
 
-  const files = Array.isArray(jsonObj.files.file) ? jsonObj.files.file : [jsonObj.files.file];
+  const files = Array.isArray(jsonObj.files.file)
+    ? jsonObj.files.file
+    : [jsonObj.files.file];
 
   for (const fileObj of files) {
-    const fileName = fileObj['@_name'];
-    let fileContent = '';
+    const fileName = fileObj["@_name"];
+    let fileContent = "";
 
-    if (fileObj['__cdata']) {
-      fileContent = fileObj['__cdata'];
+    if (fileObj["__cdata"]) {
+      fileContent = fileObj["__cdata"];
     } else {
       // If no CDATA, get text content
-      fileContent = fileObj['#text'] || '';
+      fileContent = fileObj["#text"] || "";
     }
 
     if (fileName) {
-      const filePath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, fileName);
+      const filePath = path.join(
+        vscode.workspace.workspaceFolders![0].uri.fsPath,
+        fileName
+      );
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.promises.writeFile(filePath, fileContent, 'utf8');
+      await fs.promises.writeFile(filePath, fileContent, "utf8");
     }
   }
 

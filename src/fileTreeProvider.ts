@@ -1,10 +1,11 @@
-
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import ignore from "ignore";
 
-export class FileTreeProvider implements vscode.TreeDataProvider<FileItem>, vscode.Disposable {
+export class FileTreeProvider
+  implements vscode.TreeDataProvider<FileItem>, vscode.Disposable
+{
   private _onDidChangeTreeData: vscode.EventEmitter<
     FileItem | undefined | null | void
   > = new vscode.EventEmitter<FileItem | undefined | null | void>();
@@ -24,7 +25,7 @@ export class FileTreeProvider implements vscode.TreeDataProvider<FileItem>, vsco
     this.loadIgnoredExtensions();
 
     // Create a file system watcher
-    this.watcher = vscode.workspace.createFileSystemWatcher('**/*');
+    this.watcher = vscode.workspace.createFileSystemWatcher("**/*");
 
     this.watcher.onDidCreate((uri) => this.onFileSystemChanged(uri));
     this.watcher.onDidDelete((uri) => this.onFileSystemChanged(uri));
