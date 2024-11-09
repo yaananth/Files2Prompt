@@ -13,6 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const treeView = vscode.window.createTreeView("files2PromptView", {
       treeDataProvider: fileTreeProvider,
+      manageCheckboxStateManually: true,
     });
 
     // Add fileTreeProvider to ensure proper disposal
@@ -187,7 +188,7 @@ ${xmlContent}</files>`;
   }
 }
 
-export function deactivate() {}
+export function deactivate() { }
 
 // Helper function to generate XML output
 async function generateXmlOutput(filePaths: string[]): Promise<string> {

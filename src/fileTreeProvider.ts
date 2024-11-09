@@ -4,8 +4,7 @@ import * as path from "path";
 import ignore from "ignore";
 
 export class FileTreeProvider
-  implements vscode.TreeDataProvider<FileItem>, vscode.Disposable
-{
+  implements vscode.TreeDataProvider<FileItem>, vscode.Disposable {
   private _onDidChangeTreeData: vscode.EventEmitter<
     FileItem | undefined | null | void
   > = new vscode.EventEmitter<FileItem | undefined | null | void>();
@@ -83,8 +82,10 @@ export class FileTreeProvider
 
     // Sort directories above files and alphabetically
     dirEntries.sort((a, b) => {
-      if (a.isDirectory() && !b.isDirectory()) return -1;
-      if (!a.isDirectory() && b.isDirectory()) return 1;
+      const aIsDir = a.isDirectory() || a.isSymbolicLink();
+      const bIsDir = b.isDirectory() || b.isSymbolicLink();
+      if (aIsDir && !bIsDir) return -1;
+      if (!aIsDir && bIsDir) return 1;
       return a.name.localeCompare(b.name);
     });
 
@@ -92,7 +93,25 @@ export class FileTreeProvider
       const fullPath = path.join(dirPath, entry.name);
       const relativePath = path.relative(this.workspaceRoot, fullPath);
       const uri = vscode.Uri.file(fullPath);
-      const isDirectory = entry.isDirectory();
+
+      let isDirectory = entry.isDirectory();
+      let isSymbolicLink = entry.isSymbolicLink();
+      let isBrokenLink = false;
+
+      if (isSymbolicLink) {
+        try {
+          const stats = await fs.promises.stat(fullPath);
+          isDirectory = stats.isDirectory();
+        } catch (err) {
+          // The symlink is broken
+          isBrokenLink = true;
+        }
+      }
+
+      // Skip broken symlinks
+      if (isBrokenLink) {
+        continue;
+      }
 
       const extension = path.extname(entry.name).toLowerCase().replace(".", "");
       const isIgnoredExtension = this.ignoredExtensions.has(extension);
@@ -125,7 +144,8 @@ export class FileTreeProvider
           : vscode.TreeItemCollapsibleState.None,
         isDirectory,
         checkboxState,
-        isGitIgnored || isIgnoredExtension
+        isGitIgnored || isIgnoredExtension,
+        isSymbolicLink
       );
 
       items.push(item);
@@ -224,7 +244,21 @@ export class FileTreeProvider
 
       this.checkedItems.set(fullPath, state);
 
-      if (entry.isDirectory()) {
+      let isDirectory = entry.isDirectory();
+      let isSymbolicLink = entry.isSymbolicLink();
+      let isBrokenLink = false;
+
+      if (isSymbolicLink) {
+        try {
+          const stats = await fs.promises.stat(fullPath);
+          isDirectory = stats.isDirectory();
+        } catch (err) {
+          // The symlink is broken
+          isBrokenLink = true;
+        }
+      }
+
+      if (isDirectory && !isBrokenLink) {
         await this.updateDirectoryCheckState(fullPath, state, isGitIgnored);
       }
     }
@@ -236,7 +270,7 @@ export class FileTreeProvider
         ([path, state]) =>
           state === vscode.TreeItemCheckboxState.Checked &&
           fs.existsSync(path) &&
-          fs.statSync(path).isFile()
+          (fs.lstatSync(path).isFile() || fs.lstatSync(path).isSymbolicLink())
       )
       .map(([path, _]) => path);
   }
@@ -299,12 +333,20 @@ export class FileItem extends vscode.TreeItem {
     public collapsibleState: vscode.TreeItemCollapsibleState,
     public isDirectory: boolean,
     public checkboxState: vscode.TreeItemCheckboxState,
-    public isGitIgnored: boolean
+    public isGitIgnored: boolean,
+    public isSymbolicLink: boolean = false
   ) {
     super(label, collapsibleState);
 
     this.tooltip = this.resourceUri.fsPath;
     this.iconPath = new vscode.ThemeIcon(this.isDirectory ? "folder" : "file");
     this.checkboxState = checkboxState;
+
+    if (this.isSymbolicLink) {
+      // Optionally, you can adjust the icon or label to indicate a symlink
+      this.description = this.description
+        ? this.description + " (symlink)"
+        : "(symlink)";
+    }
   }
 }
