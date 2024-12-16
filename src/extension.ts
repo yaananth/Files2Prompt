@@ -16,7 +16,6 @@ export function activate(context: vscode.ExtensionContext) {
       manageCheckboxStateManually: true,
     });
 
-    // Add fileTreeProvider to ensure proper disposal
     context.subscriptions.push(fileTreeProvider);
 
     let history: string[][] = [];
@@ -34,41 +33,32 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        // Before saving the current selection to history, check if it's the same as the last selection
         const lastSelection = history[historyPosition] || [];
         if (!arraysEqual(checkedFiles, lastSelection)) {
-          // Save the current selection to the history
           if (historyPosition < history.length - 1) {
             history = history.slice(0, historyPosition + 1);
           }
-          history.push([...checkedFiles]); // Save a copy of the current selection
+          history.push([...checkedFiles]);
           historyPosition++;
         }
 
         const xmlOutput = await generateXmlOutput(checkedFiles);
 
-        // Include system message if provided
         const config = vscode.workspace.getConfiguration("files2prompt");
         const systemMessage = config.get<string>("systemMessage");
 
         let finalOutput = xmlOutput;
 
         if (systemMessage && systemMessage.trim() !== "") {
-          // Escape any ']]>' sequences in systemMessage
-          const safeSystemMessage = systemMessage.replace(
-            /]]>/g,
-            "]]]]><![CDATA[>"
-          );
           finalOutput =
             `<systemMessage>
 <![CDATA[
-${safeSystemMessage}
->
+${systemMessage}
+]]>
 </systemMessage>
 ` + finalOutput;
         }
 
-        // Copy to clipboard
         await vscode.env.clipboard.writeText(finalOutput);
 
         vscode.window.showInformationMessage(
@@ -83,11 +73,8 @@ ${safeSystemMessage}
         if (historyPosition > 0) {
           historyPosition--;
           const previousSelection = history[historyPosition];
-
-          // Update the file selections in the FileTreeProvider
           await fileTreeProvider.setCheckedFiles(previousSelection);
         } else {
-          // Show warning message
           vscode.window.showWarningMessage(
             "No previous selection to go back to."
           );
@@ -97,11 +84,8 @@ ${safeSystemMessage}
         if (historyPosition < history.length - 1) {
           historyPosition++;
           const nextSelection = history[historyPosition];
-
-          // Update the file selections in the FileTreeProvider
           await fileTreeProvider.setCheckedFiles(nextSelection);
         } else {
-          // Show warning message
           vscode.window.showWarningMessage(
             "No next selection to go forward to."
           );
@@ -111,69 +95,57 @@ ${safeSystemMessage}
         const clipboardContent = await vscode.env.clipboard.readText();
         await processXmlContent(clipboardContent);
       }),
-      vscode.commands.registerCommand(
-        "files2prompt.copyOpenFiles",
-        async () => {
-          const tabGroups: ReadonlyArray<vscode.TabGroup> =
-            vscode.window.tabGroups.all;
+      vscode.commands.registerCommand("files2prompt.copyOpenFiles", async () => {
+        const tabGroups: ReadonlyArray<vscode.TabGroup> =
+          vscode.window.tabGroups.all;
 
-          let xmlContent = "";
+        let xmlContent = "";
 
-          for (const group of tabGroups) {
-            for (const tab of group.tabs) {
-              if (tab.input instanceof vscode.TabInputText) {
-                const fileUri = tab.input.uri;
-                const filePath = fileUri.fsPath;
-                if (fs.existsSync(filePath)) {
-                  const content = fs.readFileSync(filePath, "utf-8");
-                  // Escape any ']]>' sequences in content
-                  const safeContent = content.replace(
-                    /]]>/g,
-                    "]]]]><![CDATA[>"
-                  );
+        for (const group of tabGroups) {
+          for (const tab of group.tabs) {
+            if (tab.input instanceof vscode.TabInputText) {
+              const fileUri = tab.input.uri;
+              const filePath = fileUri.fsPath;
+              if (fs.existsSync(filePath)) {
+                const content = fs.readFileSync(filePath, "utf-8");
 
-                  const fileName = path.relative(
-                    vscode.workspace.workspaceFolders![0].uri.fsPath,
-                    filePath
-                  );
+                const fileName = path.relative(
+                  vscode.workspace.workspaceFolders![0].uri.fsPath,
+                  filePath
+                );
 
-                  xmlContent += `<file name="${fileName}">
+                xmlContent += `<file name="${fileName}">
 <![CDATA[
-${safeContent}
->
+${content}
+]]>
 </file>
 `;
-                }
               }
             }
           }
+        }
 
-          if (xmlContent === "") {
-            vscode.window.showWarningMessage("No open files to copy.");
-            return;
-          }
+        if (xmlContent === "") {
+          vscode.window.showWarningMessage("No open files to copy.");
+          return;
+        }
 
-          const finalOutput = `<files>
+        const finalOutput = `<files>
 ${xmlContent}</files>`;
 
-          // Copy to clipboard
-          await vscode.env.clipboard.writeText(finalOutput);
-
-          vscode.window.showInformationMessage(
-            "Open file contents copied to clipboard."
-          );
-        }
-      )
+        await vscode.env.clipboard.writeText(finalOutput);
+        vscode.window.showInformationMessage(
+          "Open file contents copied to clipboard."
+        );
+      })
     );
 
-    // Handle checkbox state changes asynchronously
     treeView.onDidChangeCheckboxState(async (e) => {
       for (const [item, state] of e.items) {
         await fileTreeProvider.updateCheckState(item, state);
       }
     });
 
-    // Listen for configuration changes to update behavior dynamically
     context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("files2prompt.systemMessage")) {
@@ -190,15 +162,11 @@ ${xmlContent}</files>`;
 
 export function deactivate() { }
 
-// Helper function to generate XML output
 async function generateXmlOutput(filePaths: string[]): Promise<string> {
   let xmlContent = "";
 
   for (const filePath of filePaths) {
     const content = fs.readFileSync(filePath, "utf-8");
-    // Escape any ']]>' sequences in file content
-    const safeContent = content.replace(/]]>/g, "]]]]><![CDATA[>");
-
     const fileName = path.relative(
       vscode.workspace.workspaceFolders![0].uri.fsPath,
       filePath
@@ -206,8 +174,8 @@ async function generateXmlOutput(filePaths: string[]): Promise<string> {
 
     xmlContent += `<file name="${fileName}">
 <![CDATA[
-${safeContent}
->
+${content}
+]]>
 </file>
 `;
   }
@@ -216,7 +184,6 @@ ${safeContent}
 ${xmlContent}</files>`;
 }
 
-// Helper function to compare arrays of strings
 function arraysEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
   const sortedA = [...a].sort();
@@ -227,28 +194,16 @@ function arraysEqual(a: string[], b: string[]): boolean {
   return true;
 }
 
-// Function to process XML content from clipboard
 async function processXmlContent(xmlContent: string) {
-  // Extract only XML content
-  const xmlOnly = extractXmlContent(xmlContent);
-  if (!xmlOnly) {
-    vscode.window.showErrorMessage("No valid XML content found in clipboard.");
-    return;
-  }
-
   const parser = new XMLParser({
     ignoreAttributes: false,
-    allowBooleanAttributes: true,
-    parseTagValue: true,
-    parseAttributeValue: false,
-    trimValues: false,
     cdataPropName: "__cdata",
-    tagValueProcessor: (val, tagName) => val, // Prevent default processing
+    trimValues: false
   });
 
   let jsonObj;
   try {
-    jsonObj = parser.parse(xmlOnly);
+    jsonObj = parser.parse(xmlContent);
   } catch (error) {
     vscode.window.showErrorMessage("Error parsing XML content from clipboard.");
     return;
@@ -270,7 +225,6 @@ async function processXmlContent(xmlContent: string) {
     if (fileObj["__cdata"]) {
       fileContent = fileObj["__cdata"];
     } else {
-      // If no CDATA, get text content
       fileContent = fileObj["#text"] || "";
     }
 
@@ -285,14 +239,4 @@ async function processXmlContent(xmlContent: string) {
   }
 
   vscode.window.showInformationMessage("Files have been updated successfully.");
-}
-
-function extractXmlContent(text: string): string | null {
-  const xmlMatch = text.match(/<files>[\s\S]*<\/files>/);
-  if (xmlMatch) {
-    return xmlMatch[0];
-  }
-
-  // If no <files> tag found, return null
-  return null;
 }
