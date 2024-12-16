@@ -1,5 +1,7 @@
 # Files2Prompt
 
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/Thomas-McKanna/Files2Prompt) [![Build](https://github.com/Thomas-McKanna/Files2Prompt/actions/workflows/publish.yml/badge.svg)](https://github.com/Thomas-McKanna/Files2Prompt/actions/workflows/publish.yml)
+
 Copy file contents in XML format for LLM prompts effortlessly.
 
 ![Demo](demo.gif)
@@ -80,8 +82,6 @@ Always provide full code listings. You only need to include files that have chan
 4. When you copy files, this message will be included at the top of the XML output.
 
 See recommended system message above.
-
-
 
 ## Configuration
 
