@@ -3,7 +3,7 @@
   "displayName": "Files2Prompt",
   "icon": "./files2prompt-icon.webp",
   "description": "Copy file contents for LLM prompts",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "publisher": "thomas-mckanna",
   "keywords": [
     "files",
@@ -87,7 +87,11 @@
       },
       {
         "command": "files2prompt.pasteXml",
-        "title": "Paste XML"
+        "title": "Paste XML",
+        "icon": {
+          "light": "resources/light/play.svg",
+          "dark": "resources/dark/play.svg"
+        }
       },
       {
         "command": "files2prompt.copyOpenFiles",
@@ -96,6 +100,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "files2prompt.pasteXml",
+          "when": "view == files2PromptView",
+          "group": "navigation@0"
+        },
         {
           "command": "files2prompt.copyFiles",
           "when": "view == files2PromptView",

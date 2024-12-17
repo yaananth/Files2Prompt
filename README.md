@@ -139,5 +139,5 @@ Then, a single iteration of the workflow might look like this:
 3. Copy your XML prompt with the keyboard shortcut or button.
 4. Paste the content into the LLM and submit.
 5. Copy the LLM contents, which should be in XML format if you followed the system message instructions.
-6. With the Files2Prompt view open, paste the LLM content with the keyboard shortcut. This will update the file contents or make brand new files.
+6. With the Files2Prompt view open, paste the LLM content with the keyboard shortcut or press the "play" icon in the UI. This will update the file contents or make brand new files.
 7. Loop back to step 1.

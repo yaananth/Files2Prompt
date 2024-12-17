@@ -210,7 +210,7 @@ async function processXmlContent(xmlContent: string) {
   }
 
   if (!jsonObj || !jsonObj.files || !jsonObj.files.file) {
-    vscode.window.showErrorMessage("No <file> elements found in XML content.");
+    vscode.window.showErrorMessage("No file content found. See documentation for usage.");
     return;
   }
 
