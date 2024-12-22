@@ -7,3 +7,5 @@ foobar
 .DS_Store
 docs/
 prompt
+.aider*
+.env

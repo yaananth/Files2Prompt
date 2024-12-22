@@ -95,49 +95,52 @@ ${systemMessage}
         const clipboardContent = await vscode.env.clipboard.readText();
         await processXmlContent(clipboardContent);
       }),
-      vscode.commands.registerCommand("files2prompt.copyOpenFiles", async () => {
-        const tabGroups: ReadonlyArray<vscode.TabGroup> =
-          vscode.window.tabGroups.all;
+      vscode.commands.registerCommand(
+        "files2prompt.copyOpenFiles",
+        async () => {
+          const tabGroups: ReadonlyArray<vscode.TabGroup> =
+            vscode.window.tabGroups.all;
 
-        let xmlContent = "";
+          let xmlContent = "";
 
-        for (const group of tabGroups) {
-          for (const tab of group.tabs) {
-            if (tab.input instanceof vscode.TabInputText) {
-              const fileUri = tab.input.uri;
-              const filePath = fileUri.fsPath;
-              if (fs.existsSync(filePath)) {
-                const content = fs.readFileSync(filePath, "utf-8");
+          for (const group of tabGroups) {
+            for (const tab of group.tabs) {
+              if (tab.input instanceof vscode.TabInputText) {
+                const fileUri = tab.input.uri;
+                const filePath = fileUri.fsPath;
+                if (fs.existsSync(filePath)) {
+                  const content = fs.readFileSync(filePath, "utf-8");
 
-                const fileName = path.relative(
-                  vscode.workspace.workspaceFolders![0].uri.fsPath,
-                  filePath
-                );
+                  const fileName = path.relative(
+                    vscode.workspace.workspaceFolders![0].uri.fsPath,
+                    filePath
+                  );
 
-                xmlContent += `<file name="${fileName}">
+                  xmlContent += `<file name="${fileName}">
 <![CDATA[
 ${content}
 ]]>
 </file>
 `;
+                }
               }
             }
           }
-        }
 
-        if (xmlContent === "") {
-          vscode.window.showWarningMessage("No open files to copy.");
-          return;
-        }
+          if (xmlContent === "") {
+            vscode.window.showWarningMessage("No open files to copy.");
+            return;
+          }
 
-        const finalOutput = `<files>
+          const finalOutput = `<files>
 ${xmlContent}</files>`;
 
-        await vscode.env.clipboard.writeText(finalOutput);
-        vscode.window.showInformationMessage(
-          "Open file contents copied to clipboard."
-        );
-      })
+          await vscode.env.clipboard.writeText(finalOutput);
+          vscode.window.showInformationMessage(
+            "Open file contents copied to clipboard."
+          );
+        }
+      )
     );
 
     treeView.onDidChangeCheckboxState(async (e) => {
@@ -160,7 +163,7 @@ ${xmlContent}</files>`;
   }
 }
 
-export function deactivate() { }
+export function deactivate() {}
 
 async function generateXmlOutput(filePaths: string[]): Promise<string> {
   let xmlContent = "";
@@ -198,7 +201,7 @@ async function processXmlContent(xmlContent: string) {
   const parser = new XMLParser({
     ignoreAttributes: false,
     cdataPropName: "__cdata",
-    trimValues: false
+    trimValues: false,
   });
 
   let jsonObj;
@@ -210,7 +213,9 @@ async function processXmlContent(xmlContent: string) {
   }
 
   if (!jsonObj || !jsonObj.files || !jsonObj.files.file) {
-    vscode.window.showErrorMessage("No file content found. See documentation for usage.");
+    vscode.window.showErrorMessage(
+      "No file content found. See documentation for usage."
+    );
     return;
   }
 
@@ -220,7 +225,7 @@ async function processXmlContent(xmlContent: string) {
 
   const changedFiles: string[] = [];
   const newFiles: string[] = [];
-  
+
   for (const fileObj of files) {
     const fileName = fileObj["@_name"];
     let fileContent = "";
@@ -236,16 +241,16 @@ async function processXmlContent(xmlContent: string) {
         vscode.workspace.workspaceFolders![0].uri.fsPath,
         fileName
       );
-      
+
       // Check if file exists before writing
       const fileExists = fs.existsSync(filePath);
-      
+
       // Create directory if needed
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-      
+
       // If file exists, check if content is different
       if (fileExists) {
-        const existingContent = await fs.promises.readFile(filePath, 'utf8');
+        const existingContent = await fs.promises.readFile(filePath, "utf8");
         if (existingContent !== fileContent) {
           await fs.promises.writeFile(filePath, fileContent, "utf8");
           changedFiles.push(fileName);
@@ -258,29 +263,33 @@ async function processXmlContent(xmlContent: string) {
   }
 
   // Create detailed message about changes
-  let message = '';
+  let message = "";
   if (changedFiles.length > 0) {
-    message += `Modified files:\n${changedFiles.join('\n')}\n\n`;
+    message += `Modified files:\n${changedFiles.join("\n")}\n\n`;
   }
   if (newFiles.length > 0) {
-    message += `New files:\n${newFiles.join('\n')}`;
+    message += `New files:\n${newFiles.join("\n")}`;
   }
 
   if (message) {
     // Show information message with option to view details
-    vscode.window.showInformationMessage(
-      `Files have been updated successfully. ${changedFiles.length} modified, ${newFiles.length} new.`,
-      'Show Details'
-    ).then(selection => {
-      if (selection === 'Show Details') {
-        // Create and show output channel with details
-        const channel = vscode.window.createOutputChannel('Files2Prompt Changes');
-        channel.clear();
-        channel.appendLine(message);
-        channel.show();
-      }
-    });
+    vscode.window
+      .showInformationMessage(
+        `Files have been updated successfully. ${changedFiles.length} modified, ${newFiles.length} new.`,
+        "Show Details"
+      )
+      .then((selection) => {
+        if (selection === "Show Details") {
+          // Create and show output channel with details
+          const channel = vscode.window.createOutputChannel(
+            "Files2Prompt Changes"
+          );
+          channel.clear();
+          channel.appendLine(message);
+          channel.show();
+        }
+      });
   } else {
-    vscode.window.showInformationMessage('No files were changed.');
+    vscode.window.showInformationMessage("No files were changed.");
   }
 }
