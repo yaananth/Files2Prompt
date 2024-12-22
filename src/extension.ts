@@ -218,6 +218,9 @@ async function processXmlContent(xmlContent: string) {
     ? jsonObj.files.file
     : [jsonObj.files.file];
 
+  const changedFiles: string[] = [];
+  const newFiles: string[] = [];
+  
   for (const fileObj of files) {
     const fileName = fileObj["@_name"];
     let fileContent = "";
@@ -233,10 +236,51 @@ async function processXmlContent(xmlContent: string) {
         vscode.workspace.workspaceFolders![0].uri.fsPath,
         fileName
       );
+      
+      // Check if file exists before writing
+      const fileExists = fs.existsSync(filePath);
+      
+      // Create directory if needed
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.promises.writeFile(filePath, fileContent, "utf8");
+      
+      // If file exists, check if content is different
+      if (fileExists) {
+        const existingContent = await fs.promises.readFile(filePath, 'utf8');
+        if (existingContent !== fileContent) {
+          await fs.promises.writeFile(filePath, fileContent, "utf8");
+          changedFiles.push(fileName);
+        }
+      } else {
+        await fs.promises.writeFile(filePath, fileContent, "utf8");
+        newFiles.push(fileName);
+      }
     }
   }
 
-  vscode.window.showInformationMessage("Files have been updated successfully.");
+  // Create detailed message about changes
+  let message = '';
+  if (changedFiles.length > 0) {
+    message += `Modified files:\n${changedFiles.join('\n')}\n\n`;
+  }
+  if (newFiles.length > 0) {
+    message += `New files:\n${newFiles.join('\n')}`;
+  }
+
+  if (message) {
+    // Show information message with option to view details
+    vscode.window.showInformationMessage(
+      `Files have been updated successfully. ${changedFiles.length} modified, ${newFiles.length} new.`,
+      'Show Details'
+    ).then(selection => {
+      if (selection === 'Show Details') {
+        // Create and show output channel with details
+        const channel = vscode.window.createOutputChannel('Files2Prompt Changes');
+        channel.clear();
+        channel.appendLine(message);
+        channel.show();
+      }
+    });
+  } else {
+    vscode.window.showInformationMessage('No files were changed.');
+  }
 }
