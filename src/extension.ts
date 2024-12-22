@@ -223,8 +223,8 @@ async function processXmlContent(xmlContent: string) {
     ? jsonObj.files.file
     : [jsonObj.files.file];
 
-  const changedFiles: string[] = [];
-  const newFiles: string[] = [];
+  const changedFiles: { path: string; uri: vscode.Uri }[] = [];
+  const newFiles: { path: string; uri: vscode.Uri }[] = [];
 
   for (const fileObj of files) {
     const fileName = fileObj["@_name"];
@@ -244,6 +244,7 @@ async function processXmlContent(xmlContent: string) {
 
       // Check if file exists before writing
       const fileExists = fs.existsSync(filePath);
+      const fileUri = vscode.Uri.file(filePath);
 
       // Create directory if needed
       await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
@@ -253,43 +254,77 @@ async function processXmlContent(xmlContent: string) {
         const existingContent = await fs.promises.readFile(filePath, "utf8");
         if (existingContent !== fileContent) {
           await fs.promises.writeFile(filePath, fileContent, "utf8");
-          changedFiles.push(fileName);
+          changedFiles.push({ path: fileName, uri: fileUri });
         }
       } else {
         await fs.promises.writeFile(filePath, fileContent, "utf8");
-        newFiles.push(fileName);
+        newFiles.push({ path: fileName, uri: fileUri });
       }
     }
   }
 
-  // Create detailed message about changes
-  let message = "";
-  if (changedFiles.length > 0) {
-    message += `Modified files:\n${changedFiles.join("\n")}\n\n`;
-  }
-  if (newFiles.length > 0) {
-    message += `New files:\n${newFiles.join("\n")}`;
-  }
+  if (changedFiles.length > 0 || newFiles.length > 0) {
+    // Create quick pick items for all changed/new files
+    const quickPickItems: vscode.QuickPickItem[] = [
+      ...changedFiles.map(f => ({
+        label: `📝 ${f.path}`,
+        description: 'Modified',
+        uri: f.uri
+      })),
+      ...newFiles.map(f => ({
+        label: `✨ ${f.path}`,
+        description: 'New',
+        uri: f.uri
+      }))
+    ];
 
-  if (message) {
-    // Show information message with option to view details
-    vscode.window
-      .showInformationMessage(
-        `Files have been updated successfully. ${changedFiles.length} modified, ${newFiles.length} new.`,
-        "Show Details"
-      )
-      .then((selection) => {
-        if (selection === "Show Details") {
-          // Create and show output channel with details
-          const channel = vscode.window.createOutputChannel(
-            "Files2Prompt Changes"
-          );
-          channel.clear();
-          channel.appendLine(message);
-          channel.show();
+    // Show information message with multiple actions
+    vscode.window.showInformationMessage(
+      `Files have been updated successfully. ${changedFiles.length} modified, ${newFiles.length} new.`,
+      'Show Details',
+      'Open Changed Files'
+    ).then(async selection => {
+      if (selection === 'Show Details') {
+        // Create and show output channel with details and clickable links
+        const channel = vscode.window.createOutputChannel('Files2Prompt Changes');
+        channel.clear();
+        
+        if (changedFiles.length > 0) {
+          channel.appendLine('Modified files:');
+          changedFiles.forEach(file => {
+            channel.appendLine(`${file.path}`);
+          });
+          channel.appendLine('');
         }
-      });
+        
+        if (newFiles.length > 0) {
+          channel.appendLine('New files:');
+          newFiles.forEach(file => {
+            channel.appendLine(`${file.path}`);
+          });
+        }
+        
+        channel.show();
+      } else if (selection === 'Open Changed Files') {
+        // Show quick pick with all changed files
+        const selected = await vscode.window.showQuickPick(quickPickItems, {
+          placeHolder: 'Select files to open',
+          canPickMany: true
+        });
+
+        if (selected) {
+          // Open each selected file
+          for (const item of selected) {
+            const uri = (item as any).uri;
+            if (uri) {
+              const doc = await vscode.workspace.openTextDocument(uri);
+              await vscode.window.showTextDocument(doc, { preview: false });
+            }
+          }
+        }
+      }
+    });
   } else {
-    vscode.window.showInformationMessage("No files were changed.");
+    vscode.window.showInformationMessage('No files were changed.');
   }
 }
