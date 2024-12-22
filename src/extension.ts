@@ -266,65 +266,69 @@ async function processXmlContent(xmlContent: string) {
   if (changedFiles.length > 0 || newFiles.length > 0) {
     // Create quick pick items for all changed/new files
     const quickPickItems: vscode.QuickPickItem[] = [
-      ...changedFiles.map(f => ({
+      ...changedFiles.map((f) => ({
         label: `📝 ${f.path}`,
-        description: 'Modified',
-        uri: f.uri
+        description: "Modified",
+        uri: f.uri,
       })),
-      ...newFiles.map(f => ({
+      ...newFiles.map((f) => ({
         label: `✨ ${f.path}`,
-        description: 'New',
-        uri: f.uri
-      }))
+        description: "New",
+        uri: f.uri,
+      })),
     ];
 
     // Show information message with multiple actions
-    vscode.window.showInformationMessage(
-      `Files have been updated successfully. ${changedFiles.length} modified, ${newFiles.length} new.`,
-      'Show Details',
-      'Open Changed Files'
-    ).then(async selection => {
-      if (selection === 'Show Details') {
-        // Create and show output channel with details and clickable links
-        const channel = vscode.window.createOutputChannel('Files2Prompt Changes');
-        channel.clear();
-        
-        if (changedFiles.length > 0) {
-          channel.appendLine('Modified files:');
-          changedFiles.forEach(file => {
-            channel.appendLine(`${file.path}`);
-          });
-          channel.appendLine('');
-        }
-        
-        if (newFiles.length > 0) {
-          channel.appendLine('New files:');
-          newFiles.forEach(file => {
-            channel.appendLine(`${file.path}`);
-          });
-        }
-        
-        channel.show();
-      } else if (selection === 'Open Changed Files') {
-        // Show quick pick with all changed files
-        const selected = await vscode.window.showQuickPick(quickPickItems, {
-          placeHolder: 'Select files to open',
-          canPickMany: true
-        });
+    vscode.window
+      .showInformationMessage(
+        `Files have been updated successfully. ${changedFiles.length} modified, ${newFiles.length} new.`,
+        "Show Details",
+        "Open Changed Files"
+      )
+      .then(async (selection) => {
+        if (selection === "Show Details") {
+          // Create and show output channel with details and clickable links
+          const channel = vscode.window.createOutputChannel(
+            "Files2Prompt Changes"
+          );
+          channel.clear();
 
-        if (selected) {
-          // Open each selected file
-          for (const item of selected) {
-            const uri = (item as any).uri;
-            if (uri) {
-              const doc = await vscode.workspace.openTextDocument(uri);
-              await vscode.window.showTextDocument(doc, { preview: false });
+          if (changedFiles.length > 0) {
+            channel.appendLine("Modified files:");
+            changedFiles.forEach((file) => {
+              channel.appendLine(`${file.path}`);
+            });
+            channel.appendLine("");
+          }
+
+          if (newFiles.length > 0) {
+            channel.appendLine("New files:");
+            newFiles.forEach((file) => {
+              channel.appendLine(`${file.path}`);
+            });
+          }
+
+          channel.show();
+        } else if (selection === "Open Changed Files") {
+          // Show quick pick with all changed files
+          const selected = await vscode.window.showQuickPick(quickPickItems, {
+            placeHolder: "Select files to open",
+            canPickMany: true,
+          });
+
+          if (selected) {
+            // Open each selected file
+            for (const item of selected) {
+              const uri = (item as any).uri;
+              if (uri) {
+                const doc = await vscode.workspace.openTextDocument(uri);
+                await vscode.window.showTextDocument(doc, { preview: false });
+              }
             }
           }
         }
-      }
-    });
+      });
   } else {
-    vscode.window.showInformationMessage('No files were changed.');
+    vscode.window.showInformationMessage("No files were changed.");
   }
 }
