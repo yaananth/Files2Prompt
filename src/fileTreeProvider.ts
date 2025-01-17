@@ -265,14 +265,35 @@ export class FileTreeProvider
   }
 
   getCheckedFiles(): string[] {
-    return Array.from(this.checkedItems.entries())
-      .filter(
-        ([path, state]) =>
-          state === vscode.TreeItemCheckboxState.Checked &&
-          fs.existsSync(path) &&
-          (fs.lstatSync(path).isFile() || fs.lstatSync(path).isSymbolicLink())
-      )
-      .map(([path, _]) => path);
+    const checkedFiles: string[] = [];
+
+    const processDirectory = (dirPath: string) => {
+      const dirEntries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+      for (const entry of dirEntries) {
+        const fullPath = path.join(dirPath, entry.name);
+        const relativePath = path.relative(this.workspaceRoot, fullPath);
+
+        if (this.isGitIgnored(relativePath)) {
+          continue;
+        }
+
+        if (entry.isDirectory()) {
+          processDirectory(fullPath);
+        } else if (entry.isFile() || entry.isSymbolicLink()) {
+          if (
+            this.checkedItems.get(fullPath) ===
+            vscode.TreeItemCheckboxState.Checked
+          ) {
+            checkedFiles.push(fullPath);
+          }
+        }
+      }
+    };
+
+    processDirectory(this.workspaceRoot);
+
+    return checkedFiles;
   }
 
   public async setCheckedFiles(filePaths: string[]): Promise<void> {
