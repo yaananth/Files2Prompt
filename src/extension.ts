@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { FileTreeProvider } from "./fileTreeProvider";
 import { XMLParser } from "fast-xml-parser";
+import ignore from "ignore";
 
 export function activate(context: vscode.ExtensionContext) {
   const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -62,7 +63,7 @@ ${systemMessage}
         await vscode.env.clipboard.writeText(finalOutput);
 
         vscode.window.showInformationMessage(
-          "File contents copied to clipboard."
+          "File contents with folder structure copied to clipboard."
         );
       }),
       vscode.commands.registerCommand("files2prompt.clearChecks", () => {
@@ -137,7 +138,7 @@ ${xmlContent}</files>`;
 
           await vscode.env.clipboard.writeText(finalOutput);
           vscode.window.showInformationMessage(
-            "Open file contents copied to clipboard."
+            "Open file contents with folder structure copied to clipboard."
           );
         }
       )
@@ -166,23 +167,59 @@ ${xmlContent}</files>`;
 export function deactivate() {}
 
 async function generateXmlOutput(filePaths: string[]): Promise<string> {
-  let xmlContent = "";
+  const fileTree: any = {};
+  const ig = ignore();
+  const gitignorePath = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, ".gitignore");
+
+  if (fs.existsSync(gitignorePath)) {
+    const gitignoreContent = fs.readFileSync(gitignorePath, "utf-8");
+    ig.add(gitignoreContent);
+  }
 
   for (const filePath of filePaths) {
-    const content = fs.readFileSync(filePath, "utf-8");
-    const fileName = path.relative(
+    const relativePath = path.relative(
       vscode.workspace.workspaceFolders![0].uri.fsPath,
       filePath
     );
 
-    xmlContent += `<file name="${fileName}">
+    if (ig.ignores(relativePath)) {
+      continue;
+    }
+
+    const content = fs.readFileSync(filePath, "utf-8");
+    const parts = relativePath.split(path.sep);
+
+    let current = fileTree;
+    for (const part of parts.slice(0, -1)) {
+      if (!current[part]) {
+        current[part] = {};
+      }
+      current = current[part];
+    }
+    current[parts[parts.length - 1]] = content;
+  }
+
+  function buildXmlTree(obj: any, indent: string = ""): string {
+    let xml = "";
+    for (const key in obj) {
+      if (typeof obj[key] === "string") {
+        xml += `${indent}<file name="${key}">
 <![CDATA[
-${content}
+${obj[key]}
 ]]>
 </file>
 `;
+      } else {
+        xml += `${indent}<folder name="${key}">
+${buildXmlTree(obj[key], indent + "  ")}
+${indent}</folder>
+`;
+      }
+    }
+    return xml;
   }
 
+  const xmlContent = buildXmlTree(fileTree);
   return `<files>
 ${xmlContent}</files>`;
 }
