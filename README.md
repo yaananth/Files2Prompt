@@ -16,6 +16,7 @@ Copy file contents in XML format for LLM prompts effortlessly.
 - **Git Ignore Support**: Automatically ignores files and directories specified in your .gitignore.
 - **Selection History**: Quickly switch between sets of previously selected files.
 - **Paste XML Response**: If XML is pasted into the editor in the same format as the copied output, the files will automatically be updated or created in your workspace. This allows for rapid iteration. See [recommended workflow](#recommended-workflow) for more information.
+- **Recursive Folder Copying**: Automatically copies the folder tree while respecting `.gitignore` rules during the copy process.
 
 ## Installation
 
