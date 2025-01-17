@@ -3,7 +3,6 @@ import * as fs from "fs";
 import * as path from "path";
 import { FileTreeProvider } from "./fileTreeProvider";
 import { XMLParser } from "fast-xml-parser";
-import ignore from "ignore";
 
 export function activate(context: vscode.ExtensionContext) {
   const workspaceFolders = vscode.workspace.workspaceFolders;
